@@ -55,6 +55,10 @@ public class Role {
 		return Set.copyOf(permissions);
 	}
 
+	public int getPermissionsLength() {
+		return permissions.size();
+	}
+
 	public String getName() {
 		return name;
 	}
