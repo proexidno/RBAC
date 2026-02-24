@@ -1,4 +1,6 @@
-package org;
+package org.filters;
+
+import org.User;
 
 @FunctionalInterface
 public interface UserFilter {

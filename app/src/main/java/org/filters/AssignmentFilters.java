@@ -1,7 +1,11 @@
-package org;
+package org.filters;
 
 import java.time.Instant;
 import java.time.format.DateTimeParseException;
+
+import org.Role;
+import org.TemporaryAssignment;
+import org.User;
 
 public class AssignmentFilters {
 	static AssignmentFilter byUser(User user) {
@@ -62,7 +66,7 @@ public class AssignmentFilters {
 				return false;
 			}
 			TemporaryAssignment temporaryAssignment = (TemporaryAssignment) roleAssignment;
-			return Instant.parse(temporaryAssignment.expiresAt).isBefore(Instant.parse(date));
+			return Instant.parse(temporaryAssignment.getExpiresAt()).isBefore(Instant.parse(date));
 		};
 	}
 }

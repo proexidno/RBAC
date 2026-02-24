@@ -1,4 +1,6 @@
-package org;
+package org.filters;
+
+import org.RoleAssignment;
 
 @FunctionalInterface
 public interface AssignmentFilter {

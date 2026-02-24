@@ -1,4 +1,6 @@
-package org;
+package org.filters;
+
+import org.Permission;
 
 public class RoleFilters {
 	static RoleFilter byName(String name) {

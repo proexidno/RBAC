@@ -1,4 +1,6 @@
-package org;
+package org.filters;
+
+import org.Role;
 
 @FunctionalInterface
 public interface RoleFilter {

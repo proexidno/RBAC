@@ -1,4 +1,4 @@
-package org;
+package org.filters;
 
 public class UserFilters {
 

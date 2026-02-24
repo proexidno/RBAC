@@ -1,15 +1,17 @@
-package org;
+package org.sorters;
 
 import java.util.Comparator;
 
+import org.Role;
+
 public class RoleSorters {
-	Comparator<Role> byName() {
+	static Comparator<Role> byName() {
 		return Comparator.comparing(
 				Role::getName,
 				Comparator.nullsLast(Comparator.naturalOrder()));
 	}
 
-	Comparator<Role> byPermissionCount() {
+	static Comparator<Role> byPermissionCount() {
 		return Comparator.comparing(
 				Role::getPermissionsLength,
 				Comparator.nullsLast(Comparator.naturalOrder()));

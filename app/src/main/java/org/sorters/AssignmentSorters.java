@@ -1,28 +1,27 @@
-package org;
+package org.sorters;
 
 import java.time.Instant;
 import java.util.Comparator;
 
+import org.AssignmentMetadata;
+import org.RoleAssignment;
+
 public class AssignmentSorters {
-	Comparator<RoleAssignment> byUsername() {
+	static Comparator<RoleAssignment> byUsername() {
 		return Comparator.comparing(
 				RoleAssignment::user,
 				Comparator.nullsLast(
-						Comparator.comparing(
-								User::username,
-								Comparator.nullsLast(Comparator.naturalOrder()))));
+						UserSorters.byUsername()));
 	}
 
-	Comparator<RoleAssignment> byRoleName() {
+	static Comparator<RoleAssignment> byRoleName() {
 		return Comparator.comparing(
 				RoleAssignment::role,
 				Comparator.nullsLast(
-						Comparator.comparing(
-								Role::getName,
-								Comparator.nullsLast(Comparator.naturalOrder()))));
+						RoleSorters.byName()));
 	}
 
-	Comparator<RoleAssignment> byAssignmentDate() {
+	static Comparator<RoleAssignment> byAssignmentDate() {
 		return Comparator.<RoleAssignment, Instant>comparing(
 				roleAssignment -> {
 					AssignmentMetadata metadata = roleAssignment.metadata();
