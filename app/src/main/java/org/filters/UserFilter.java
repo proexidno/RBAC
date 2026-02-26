@@ -4,13 +4,13 @@ import org.User;
 
 @FunctionalInterface
 public interface UserFilter {
-	boolean test(User user);
+	public boolean test(User user);
 
-	default UserFilter and(UserFilter other) {
+	public default UserFilter and(UserFilter other) {
 		return user -> this.test(user) && other.test(user);
 	}
 
-	default UserFilter or(UserFilter other) {
+	public default UserFilter or(UserFilter other) {
 		return user -> this.test(user) || other.test(user);
 	}
 
