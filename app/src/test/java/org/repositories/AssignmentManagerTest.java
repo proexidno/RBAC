@@ -146,7 +146,6 @@ class AssignmentManagerTest {
 
 		String newDateStr = newDate.toString();
 		assignmentManager.extendTemporaryAssignment(id, newDateStr);
-
 		assertDoesNotThrow(() -> assignmentManager.extendTemporaryAssignment(id, newDateStr));
 	}
 
