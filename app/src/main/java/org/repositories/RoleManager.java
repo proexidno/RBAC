@@ -59,13 +59,15 @@ public class RoleManager implements Repository<Role> {
 
 	@Override
 	public void add(Role item) {
+		if (rolesByName.containsKey(item.getName())) {
+			remove(rolesByName.get(item.getName()));
+		}
 		rolesById.put(item.getId(), item);
-		rolesById.put(item.getName(), item);
+		rolesByName.put(item.getName(), item);
 	}
 
 	@Override
 	public boolean remove(Role item) {
-		// TODO: RoleAssignment get users of that role, if exist dont remove
 		return rolesById.remove(item.getId(), item)
 				&& rolesByName.remove(item.getName(), item);
 	}

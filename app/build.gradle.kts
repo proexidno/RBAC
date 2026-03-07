@@ -21,6 +21,12 @@ dependencies {
 
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 
+    // Mockito Core
+    testImplementation("org.mockito:mockito-core:5.14.2")
+
+    // Mockito Extension for JUnit 5 (enables @Mock, @InjectMocks automatically)
+    testImplementation("org.mockito:mockito-junit-jupiter:5.14.2")
+
     // This dependency is used by the application.
     implementation(libs.guava)
 }
@@ -40,4 +46,6 @@ application {
 tasks.named<Test>("test") {
     // Use JUnit Platform for unit tests.
     useJUnitPlatform()
+
+    jvmArgs("-Dnet.bytebuddy.experimental=true")
 }

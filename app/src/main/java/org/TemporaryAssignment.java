@@ -7,10 +7,10 @@ public class TemporaryAssignment extends AbstractRoleAssignment {
 	String expiresAt;
 	boolean autoRenew;
 
-	public TemporaryAssignment(User user, Role role, AssignmentMetadata assignmentMetadata, String expiresAt,
+	public TemporaryAssignment(User user, Role role, AssignmentMetadata assignmentMetadata, Instant futureDate,
 			boolean autoRenew) {
 		super(user, role, assignmentMetadata);
-		this.expiresAt = expiresAt;
+		this.expiresAt = futureDate.toString();
 		this.autoRenew = autoRenew;
 	}
 
