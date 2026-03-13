@@ -3,17 +3,23 @@ package org;
 import org.repositories.UserManager;
 import org.repositories.RoleManager;
 import org.repositories.AssignmentManager;
+import org.utils.AuditLog;
+import org.utils.ReportGenerator;
 
 public class RBACSystem {
 	private final UserManager userManager;
 	private final RoleManager roleManager;
 	private final AssignmentManager assignmentManager;
+	private final AuditLog auditLog;
+	private final ReportGenerator reportGenerator;
 	private String currentUser;
 
 	public RBACSystem() {
 		this.userManager = new UserManager();
 		this.roleManager = new RoleManager();
 		this.assignmentManager = new AssignmentManager();
+		this.auditLog = new AuditLog();
+		this.reportGenerator = new ReportGenerator();
 		this.currentUser = "system";
 	}
 
@@ -95,5 +101,17 @@ public class RBACSystem {
 		sb.append(String.format("Average roles per user: %.2f\n", avgRolesPerUser));
 
 		return sb.toString();
+	}
+
+	public AuditLog getAuditLog() {
+		return auditLog;
+	}
+
+	public ReportGenerator getReportGenerator() {
+		return reportGenerator;
+	}
+
+	public void logAction(String action, String target, String details) {
+		auditLog.log(action, currentUser, target, details);
 	}
 }

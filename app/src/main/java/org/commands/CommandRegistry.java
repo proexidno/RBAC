@@ -18,11 +18,12 @@ import org.Role;
 import org.RoleAssignment;
 import org.TemporaryAssignment;
 import org.User;
+import org.utils.ConsoleUtils;
+import org.utils.ValidationUtils;
 
 public class CommandRegistry {
 
 	private static final Pattern EMAIL_PATTERN = Pattern.compile("\\w+@\\w+\\.\\w+");
-	private static final Pattern USERNAME_PATTERN = Pattern.compile("[A-Za-z0-9_]+");
 
 	public static void registerAllCommands(CommandParser parser) {
 		registerUserCommands(parser);
@@ -46,41 +47,38 @@ public class CommandRegistry {
 
 		parser.registerCommand("user-create", "Create new user", (scanner, system) -> {
 			try {
-				System.out.print("Username (3-20 chars, letters/numbers/underscore): ");
-				String username = scanner.nextLine().trim();
+				String username = ConsoleUtils.promptString(scanner,
+						"Username (3-20 chars, letters/numbers/underscore): ", true);
 
-				if (!validateUsername(username)) {
-					System.out.println("Error: Invalid username format!");
+				if (!ValidationUtils.isValidUsername(username)) {
+					ConsoleUtils.printError("Invalid username format!");
 					return;
 				}
 
 				if (system.getUserManager().exists(username)) {
-					System.out.println("Error: User already exists!");
+					ConsoleUtils.printError("User already exists!");
 					return;
 				}
 
-				System.out.print("Full Name: ");
-				String fullName = scanner.nextLine().trim();
-				if (fullName.isEmpty()) {
-					System.out.println("Error: Full name cannot be empty!");
-					return;
-				}
+				String fullName = ConsoleUtils.promptString(scanner, "Full Name: ", true);
+				ValidationUtils.requireNonEmpty(fullName, "Full Name");
 
-				System.out.print("Email: ");
-				String email = scanner.nextLine().trim();
-				if (!validateEmail(email)) {
-					System.out.println("Error: Invalid email format!");
+				String email = ConsoleUtils.promptString(scanner, "Email: ", true);
+				if (!ValidationUtils.isValidEmail(email)) {
+					ConsoleUtils.printError("Invalid email format!");
 					return;
 				}
 
 				User user = User.create(username, fullName, email);
 				system.getUserManager().add(user);
-				System.out.println("User created successfully!");
 
+				system.logAction("USER_CREATED", username, "Created by " + system.getCurrentUser());
+
+				ConsoleUtils.printSuccess("User created successfully!");
 			} catch (IllegalArgumentException e) {
-				System.out.println("Error: " + e.getMessage());
+				ConsoleUtils.printError(e.getMessage());
 			} catch (Exception e) {
-				System.out.println("Error: Failed to create user - " + e.getMessage());
+				ConsoleUtils.printError("Failed to create user - " + e.getMessage());
 			}
 		});
 
@@ -233,6 +231,75 @@ public class CommandRegistry {
 			System.out.printf("%-20s %-25s %-30s%n", "Username", "Full Name", "Email");
 			results.forEach(u -> System.out.printf("%-20s %-25s %-30s%n",
 					u.username(), u.fullname(), u.email()));
+		});
+		parser.registerCommand("audit-log", "View audit log", (scanner, system) -> {
+			system.getAuditLog().printLog();
+		});
+
+		parser.registerCommand("audit-log-save", "Save audit log to file", (scanner, system) -> {
+			System.out.print("Enter filename: ");
+			String filename = scanner.nextLine().trim();
+			if (filename.isEmpty()) {
+				filename = "audit_log.txt";
+			}
+			system.getAuditLog().saveToFile(filename);
+		});
+
+		parser.registerCommand("report-users", "Generate user report", (scanner, system) -> {
+			String report = system.getReportGenerator()
+					.generateUserReport(system.getUserManager(), system.getAssignmentManager());
+			System.out.println(report);
+
+			System.out.print("Save to file? (yes/no): ");
+			if (scanner.nextLine().trim().equalsIgnoreCase("yes")) {
+				System.out.print("Enter filename: ");
+				String filename = scanner.nextLine().trim();
+				if (filename.isEmpty()) {
+					filename = "user_report.txt";
+				}
+				system.getReportGenerator().exportToFile(report, filename);
+			}
+		});
+
+		parser.registerCommand("report-roles", "Generate role report", (scanner, system) -> {
+			String report = system.getReportGenerator()
+					.generateRoleReport(system.getRoleManager(), system.getAssignmentManager());
+			System.out.println(report);
+
+			System.out.print("Save to file? (yes/no): ");
+			if (scanner.nextLine().trim().equalsIgnoreCase("yes")) {
+				System.out.print("Enter filename: ");
+				String filename = scanner.nextLine().trim();
+				if (filename.isEmpty()) {
+					filename = "role_report.txt";
+				}
+				system.getReportGenerator().exportToFile(report, filename);
+			}
+		});
+
+		parser.registerCommand("report-matrix", "Generate permission matrix", (scanner, system) -> {
+			String report = system.getReportGenerator()
+					.generatePermissionMatrix(system.getUserManager(),
+							system.getAssignmentManager());
+			System.out.println(report);
+
+			System.out.print("Save to file? (yes/no): ");
+			if (scanner.nextLine().trim().equalsIgnoreCase("yes")) {
+				System.out.print("Enter filename: ");
+				String filename = scanner.nextLine().trim();
+				if (filename.isEmpty()) {
+					filename = "permission_matrix.txt";
+				}
+				system.getReportGenerator().exportToFile(report, filename);
+			}
+		});
+
+		parser.registerCommand("report-stats", "Generate statistics report", (scanner, system) -> {
+			String report = system.getReportGenerator()
+					.generateStatisticsReport(system.getUserManager(),
+							system.getRoleManager(),
+							system.getAssignmentManager());
+			System.out.println(report);
 		});
 	}
 
@@ -940,16 +1007,6 @@ public class CommandRegistry {
 				System.out.println("Error: " + e.getMessage());
 			}
 		}
-	}
-
-	private static boolean validateUsername(String username) {
-		if (username == null || username.isEmpty()) {
-			return false;
-		}
-		if (username.length() < 3 || username.length() > 20) {
-			return false;
-		}
-		return USERNAME_PATTERN.matcher(username).matches();
 	}
 
 	private static boolean validateEmail(String email) {
