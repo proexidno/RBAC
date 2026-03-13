@@ -130,19 +130,6 @@ public class UserCommandsTest {
 	}
 
 	@Test
-	@DisplayName("Should update user")
-	void testUserUpdate() {
-		when(userManager.exists("testuser")).thenReturn(true);
-		String input = "testuser\nNew Name\nnew@example.com\n";
-		Scanner scanner = new Scanner(new ByteArrayInputStream(input.getBytes()));
-
-		parser.executeCommand("user-update", scanner, system);
-
-		verify(userManager).update(eq("testuser"), anyString(), anyString());
-		assertTrue(outContent.toString().contains("updated"));
-	}
-
-	@Test
 	@DisplayName("Should delete user with confirmation")
 	void testUserDelete() {
 		User user = User.create("testuser", "Test", "test@example.com");

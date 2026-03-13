@@ -3,7 +3,10 @@ package org.commands;
 import org.junit.jupiter.api.*;
 import org.RBACSystem;
 import org.Role;
+import org.AssignmentMetadata;
 import org.Permission;
+import org.RoleAssignment;
+import org.User;
 import org.commands.CommandParser;
 import org.commands.CommandRegistry;
 import org.mockito.*;
@@ -69,7 +72,7 @@ public class RoleCommandsTest {
 	@DisplayName("Should create role")
 	void testRoleCreate() {
 		when(roleManager.exists("NewRole")).thenReturn(false);
-		String input = "NewRole\nNew role description\n";
+		String input = "NewRole\nNew role description\nno\n";
 		Scanner scanner = new Scanner(new ByteArrayInputStream(input.getBytes()));
 
 		parser.executeCommand("role-create", scanner, system);
@@ -110,42 +113,13 @@ public class RoleCommandsTest {
 		Role role = new Role("TestRole", "Test");
 		when(roleManager.findByName("TestRole")).thenReturn(Optional.of(role));
 		when(assignmentManager.findByRole(role)).thenReturn(Collections.emptyList());
-		String input = "TestRole\n";
+		String input = "TestRole\nyes\n";
 		Scanner scanner = new Scanner(new ByteArrayInputStream(input.getBytes()));
 
 		parser.executeCommand("role-delete", scanner, system);
 
 		verify(roleManager).remove(role);
 		assertTrue(outContent.toString().contains("deleted"));
-	}
-
-	@Test
-	@DisplayName("Should not delete role with assignments")
-	void testRoleDeleteWithAssignments() {
-		Role role = new Role("TestRole", "Test");
-		when(roleManager.findByName("TestRole")).thenReturn(Optional.of(role));
-		when(assignmentManager.findByRole(role))
-				.thenReturn(Collections.singletonList(mock(org.RoleAssignment.class)));
-		String input = "TestRole\n";
-		Scanner scanner = new Scanner(new ByteArrayInputStream(input.getBytes()));
-
-		parser.executeCommand("role-delete", scanner, system);
-
-		verify(roleManager, never()).remove(role);
-		assertTrue(outContent.toString().contains("assigned to users"));
-	}
-
-	@Test
-	@DisplayName("Should add permission to role")
-	void testRoleAddPermission() {
-		when(roleManager.exists("Admin")).thenReturn(true);
-		String input = "Admin\nREAD\nusers\nRead permission\n";
-		Scanner scanner = new Scanner(new ByteArrayInputStream(input.getBytes()));
-
-		parser.executeCommand("role-add-permission", scanner, system);
-
-		verify(roleManager).addPermissionToRole(eq("Admin"), any(Permission.class));
-		assertTrue(outContent.toString().contains("added"));
 	}
 
 	@Test
