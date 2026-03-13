@@ -40,7 +40,12 @@ java {
 
 application {
     // Define the main class for the application.
-    mainClass = "org.example.App"
+    mainClass = "org.Main"
+}
+
+tasks.named<JavaExec>("run") {
+    standardInput = System.`in`
+    systemProperties["java.util.logging.ConsoleHandler.level"] = "INFO"
 }
 
 tasks.named<Test>("test") {
