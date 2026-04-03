@@ -91,6 +91,89 @@ public class ReportGenerator {
 		return sb.toString();
 	}
 
+	public String generateUserReportParallel(UserManager userManager, AssignmentManager assignmentManager) {
+		StringBuilder sb = new StringBuilder();
+		sb.append(FormatUtils.formatHeader("USER REPORT (Parallel)"));
+		sb.append("Generated: ").append(Instant.now()).append("\n\n");
+
+		List<User> users = userManager.findAll();
+		if (users.isEmpty()) {
+			sb.append("No users found.\n");
+			return sb.toString();
+		}
+
+		String[] headers = { "Username", "Full Name", "Email", "Roles", "Status" };
+
+		List<String[]> rows = users.parallelStream().map(user -> {
+			List<RoleAssignment> assignments = assignmentManager.findByUser(user);
+			List<String> roleNames = assignments.stream()
+					.filter(RoleAssignment::isActive)
+					.map(a -> a.role().getName())
+					.collect(Collectors.toList());
+
+			String roles = roleNames.isEmpty() ? "None" : String.join(", ", roleNames);
+			String status = assignments.stream().anyMatch(RoleAssignment::isActive) ? "Active" : "Inactive";
+
+			return new String[] {
+					user.username(),
+					truncate(user.fullname(), 25),
+					truncate(user.email(), 30),
+					truncate(roles, 30),
+					status
+			};
+		}).collect(Collectors.toList());
+
+		sb.append(FormatUtils.formatTable(headers, rows));
+		sb.append("\n\nTotal Users: ").append(users.size());
+		return sb.toString();
+	}
+
+	public String generatePermissionMatrixParallel(UserManager userManager, AssignmentManager assignmentManager) {
+		StringBuilder sb = new StringBuilder();
+		sb.append(FormatUtils.formatHeader("PERMISSION MATRIX (Parallel)"));
+		sb.append("Generated: ").append(Instant.now()).append("\n\n");
+
+		List<User> users = userManager.findAll();
+		if (users.isEmpty()) {
+			sb.append("No users found.\n");
+			return sb.toString();
+		}
+
+		Set<String> resources = users.parallelStream()
+				.map(assignmentManager::getUserPermissions)
+				.flatMap(Set::stream)
+				.map(Permission::resource)
+				.collect(Collectors.toCollection(TreeSet::new));
+
+		if (resources.isEmpty()) {
+			sb.append("No permissions configured.\n");
+			return sb.toString();
+		}
+
+		List<String> headerList = new ArrayList<>();
+		headerList.add("Username");
+		headerList.addAll(resources);
+		String[] headers = headerList.toArray(new String[0]);
+
+		List<String[]> rows = users.parallelStream().map(user -> {
+			Set<Permission> userPerms = assignmentManager.getUserPermissions(user);
+			Set<String> userResources = userPerms.stream()
+					.map(Permission::resource)
+					.collect(Collectors.toSet());
+
+			List<String> row = new ArrayList<>();
+			row.add(user.username());
+			for (String resource : resources) {
+				row.add(userResources.contains(resource) ? "✓" : "✗");
+			}
+			return row.toArray(new String[0]);
+		}).collect(Collectors.toList());
+
+		sb.append(FormatUtils.formatTable(headers, rows));
+		sb.append("\n\nLegend: ✓ = Has Permission, ✗ = No Permission");
+		return sb.toString();
+	}
+
 	public String generatePermissionMatrix(UserManager userManager, AssignmentManager assignmentManager) {
 		StringBuilder sb = new StringBuilder();
 		sb.append(FormatUtils.formatHeader("PERMISSION MATRIX"));
