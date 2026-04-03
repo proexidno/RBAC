@@ -1,10 +1,9 @@
 package org.repositories;
 
 import java.util.Comparator;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
 import org.Permission;
@@ -13,8 +12,8 @@ import org.filters.RoleFilter;
 import org.filters.RoleFilters;
 
 public class RoleManager implements Repository<Role> {
-	Map<String, Role> rolesById = new HashMap<>();
-	Map<String, Role> rolesByName = new HashMap<>();
+	ConcurrentHashMap<String, Role> rolesById = new ConcurrentHashMap<>();
+	ConcurrentHashMap<String, Role> rolesByName = new ConcurrentHashMap<>();
 
 	public Optional<Role> findByName(String name) {
 		return Optional.ofNullable(rolesByName.get(name));
@@ -22,13 +21,19 @@ public class RoleManager implements Repository<Role> {
 
 	public List<Role> findByFilter(RoleFilter filter) {
 		return rolesById.values().stream()
-				.filter(role -> filter.test(role))
+				.filter(filter::test)
+				.collect(Collectors.toList());
+	}
+
+	public List<Role> findByFilterParrallel(RoleFilter filter) {
+		return rolesById.values().parallelStream()
+				.filter(filter::test)
 				.collect(Collectors.toList());
 	}
 
 	public List<Role> findAll(RoleFilter filter, Comparator<Role> sorter) {
 		return rolesById.values().stream()
-				.filter(role -> filter.test(role))
+				.filter(filter::test)
 				.sorted(sorter)
 				.collect(Collectors.toList());
 	}
@@ -53,7 +58,7 @@ public class RoleManager implements Repository<Role> {
 
 	public List<Role> findRolesWithPermission(String permissionName, String resource) {
 		return rolesById.values().stream()
-				.filter(role -> RoleFilters.hasPermission(permissionName, resource).test(role))
+				.filter(RoleFilters.hasPermission(permissionName, resource)::test)
 				.collect(Collectors.toList());
 	}
 
@@ -79,8 +84,7 @@ public class RoleManager implements Repository<Role> {
 
 	@Override
 	public List<Role> findAll() {
-		return rolesById.values().stream()
-				.collect(Collectors.toList());
+		return List.copyOf(rolesById.values());
 	}
 
 	@Override

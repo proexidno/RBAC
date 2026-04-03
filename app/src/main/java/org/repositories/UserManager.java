@@ -1,10 +1,9 @@
 package org.repositories;
 
 import java.util.Comparator;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
 import org.User;
@@ -13,39 +12,39 @@ import org.filters.UserFilters;
 
 public class UserManager implements Repository<User> {
 
-	Map<String, User> users = new HashMap<>();
+	ConcurrentHashMap<String, User> users = new ConcurrentHashMap<>();
 
 	public Optional<User> findByUsername(String username) {
-		if (username == null) {
-			return null;
-		}
 		return Optional.ofNullable(users.get(username));
 	}
 
 	public Optional<User> findByEmail(String email) {
 		return users.values().stream()
-				.filter(user -> UserFilters.byEmail(email).test(user))
+				.filter(UserFilters.byEmail(email)::test)
 				.findFirst();
+	}
+
+	public List<User> findByFilterParallel(UserFilter filter) {
+		return users.values().parallelStream()
+				.filter(filter::test)
+				.collect(Collectors.toList());
 	}
 
 	public List<User> findByFilter(UserFilter filter) {
 		return users.values().stream()
-				.filter(user -> filter.test(user))
+				.filter(filter::test)
 				.collect(Collectors.toList());
 	}
 
 	public List<User> findAll(UserFilter filter, Comparator<User> sorter) {
 		return users.values().stream()
-				.filter(user -> filter.test(user))
+				.filter(filter::test)
 				.sorted(sorter)
 				.collect(Collectors.toList());
 	}
 
 	public boolean exists(String username) {
-		if (username == null) {
-			return false;
-		}
-		return users.containsKey(username);
+		return username != null && users.containsKey(username);
 	}
 
 	public void update(String username, String newFullName, String newEmail) {
@@ -70,8 +69,7 @@ public class UserManager implements Repository<User> {
 
 	@Override
 	public List<User> findAll() {
-		return users.values().stream()
-				.collect(Collectors.toList());
+		return List.copyOf(users.values());
 	}
 
 	@Override

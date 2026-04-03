@@ -2,11 +2,10 @@ package org.repositories;
 
 import java.time.Instant;
 import java.util.Comparator;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
 import org.Permission;
@@ -19,55 +18,63 @@ import org.filters.AssignmentFilters;
 import org.filters.RoleFilters;
 
 public class AssignmentManager implements Repository<RoleAssignment> {
-	Map<String, RoleAssignment> roleAssignments = new HashMap<>();
+	ConcurrentHashMap<String, RoleAssignment> roleAssignments = new ConcurrentHashMap<>();
 
 	public List<RoleAssignment> findByUser(User user) {
 		return roleAssignments.values().stream()
-				.filter(roleAssignment -> AssignmentFilters.byUser(user).test(roleAssignment))
+				.filter(AssignmentFilters.byUser(user)::test)
 				.collect(Collectors.toList());
 	}
 
 	public List<RoleAssignment> findByRole(Role role) {
 		return roleAssignments.values().stream()
-				.filter(roleAssignment -> AssignmentFilters.byRole(role).test(roleAssignment))
+				.filter(AssignmentFilters.byRole(role)::test)
 				.collect(Collectors.toList());
 	}
 
 	public List<RoleAssignment> findByFilter(AssignmentFilter filter) {
 		return roleAssignments.values().stream()
-				.filter(roleAssignment -> filter.test(roleAssignment))
+				.filter(filter::test)
+				.collect(Collectors.toList());
+	}
+
+	public List<RoleAssignment> findByFilterParallel(AssignmentFilter filter) {
+		return roleAssignments.values().parallelStream()
+				.filter(filter::test)
 				.collect(Collectors.toList());
 	}
 
 	public List<RoleAssignment> findAll(AssignmentFilter filter, Comparator<RoleAssignment> sorter) {
 		return roleAssignments.values().stream()
-				.filter(roleAssignment -> filter.test(roleAssignment))
+				.filter(filter::test)
 				.sorted(sorter)
 				.collect(Collectors.toList());
 	}
 
 	public List<RoleAssignment> getActiveAssignments() {
 		return roleAssignments.values().stream()
-				.filter(roleAssignment -> AssignmentFilters.activeOnly().test(roleAssignment))
+				.filter(AssignmentFilters.activeOnly()::test)
 				.collect(Collectors.toList());
 	}
 
 	public List<RoleAssignment> getExpiredAssignments() {
 		return roleAssignments.values().stream()
-				.filter(roleAssignment -> AssignmentFilters.expiringBefore(Instant.now()).test(roleAssignment))
+				.filter(AssignmentFilters.expiringBefore(Instant.now())::test)
 				.collect(Collectors.toList());
 	}
 
 	public boolean userHasRole(User user, Role role) {
 		return roleAssignments.values().stream()
 				.filter(
-						roleAssignment -> AssignmentFilters.byUser(user).and(AssignmentFilters.byRole(role)).test(roleAssignment))
+						AssignmentFilters.byUser(user)
+								.and(AssignmentFilters.byRole(role))::test)
 				.findFirst().isPresent();
 	}
 
 	public boolean userHasPermission(User user, String permissionName, String resource) {
 		return findByUser(user).stream()
-				.filter(roleAssignment -> RoleFilters.hasPermission(permissionName, resource).test(roleAssignment.role()))
+				.filter(roleAssignment -> RoleFilters.hasPermission(permissionName, resource)
+						.test(roleAssignment.role()))
 				.findFirst().isPresent();
 	}
 
@@ -108,8 +115,7 @@ public class AssignmentManager implements Repository<RoleAssignment> {
 
 	@Override
 	public List<RoleAssignment> findAll() {
-		return roleAssignments.values().stream()
-				.collect(Collectors.toList());
+		return List.copyOf(roleAssignments.values());
 	}
 
 	@Override
