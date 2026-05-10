@@ -1,0 +1,35 @@
+server:
+  port: 8083
+
+spring:
+  application:
+    name: notification-service
+  datasource:
+    url: ${SPRING_DATASOURCE_URL:jdbc}
+    username: ${SPRING_DATASOURCE_USERNAME}
+    password: ${SPRING_DATASOURCE_PASSWORD}
+  rabbitmq:
+    host: ${SPRING_RABBITMQ_HOST}
+    port: ${SPRING_RABBITMQ_PORT}
+    username: ${SPRING_RABBITMQ_USERNAME}
+    password: ${SPRING_RABBITMQ_PASSWORD}
+    listener:
+      simple:
+        concurrency: ${WORKER_POOL_SIZE:4}
+        max-concurrency: ${WORKER_POOL_SIZE:4}
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    open-in-view: false
+
+notification:
+  rabbitmq:
+    exchange: ${NOTIFICATION_EXCHANGE:taxi.notifications.exchange}
+    queue: ${NOTIFICATION_QUEUE:taxi.notifications.queue}
+    routing-key: ${NOTIFICATION_ROUTING_KEY:taxi.notifications.created}
+  send-delay-ms: 350
+
+jwt:
+  secret: ${JWT_SECRET}
+  issuer: taxi-platform
+  ttl-seconds: 86400
