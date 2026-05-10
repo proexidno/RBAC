@@ -28,7 +28,7 @@ class NotificationListenerTest {
     @Test
     void consumeMarksTaskAsSentAfterSuccessfulProcessing() {
         NotificationTask task = task(7L, "Trip assigned");
-        NotificationListener listener = new NotificationListener(queueService, publisher, 0);
+        NotificationListener listener = new NotificationListener(queueService, publisher, 1000);
         when(queueService.beginProcessing(7L)).thenReturn(Optional.of(task));
 
         listener.consume(new NotificationMessage(7L));
@@ -40,7 +40,7 @@ class NotificationListenerTest {
     @Test
     void consumeRepublishesTaskWhenRetryIsNeeded() {
         NotificationTask task = task(8L, "FAIL this notification");
-        NotificationListener listener = new NotificationListener(queueService, publisher, 0);
+        NotificationListener listener = new NotificationListener(queueService, publisher, 1000);
         when(queueService.beginProcessing(8L)).thenReturn(Optional.of(task));
         when(queueService.markFailed(8L, "Simulated notification failure")).thenReturn(true);
 
@@ -52,7 +52,7 @@ class NotificationListenerTest {
 
     @Test
     void consumeDoesNothingForUnknownTask() {
-        NotificationListener listener = new NotificationListener(queueService, publisher, 0);
+        NotificationListener listener = new NotificationListener(queueService, publisher, 1000);
         when(queueService.beginProcessing(9L)).thenReturn(Optional.empty());
 
         listener.consume(new NotificationMessage(9L));

@@ -19,8 +19,8 @@ public class NotificationListener {
     private final long sendDelayMs;
 
     public NotificationListener(NotificationQueueService queueService,
-                                NotificationPublisher publisher,
-                                @Value("${notification.send-delay-ms}") long sendDelayMs) {
+            NotificationPublisher publisher,
+            @Value("${notification.send-delay-ms}") long sendDelayMs) {
         this.queueService = queueService;
         this.publisher = publisher;
         this.sendDelayMs = sendDelayMs;

@@ -27,7 +27,7 @@ notification:
     exchange: ${NOTIFICATION_EXCHANGE:taxi.notifications.exchange}
     queue: ${NOTIFICATION_QUEUE:taxi.notifications.queue}
     routing-key: ${NOTIFICATION_ROUTING_KEY:taxi.notifications.created}
-  send-delay-ms: 350
+  send-delay-ms: ${NOTIFICATION_SEND_DELAY_MS:1000}
 
 jwt:
   secret: ${JWT_SECRET}
