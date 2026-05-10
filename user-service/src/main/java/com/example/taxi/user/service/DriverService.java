@@ -8,6 +8,7 @@ import jakarta.persistence.EntityManager;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -31,15 +32,32 @@ public class DriverService {
     }
 
     public Driver create(DriverCreateRequest request) {
+        var existingByLicense = driverRepository.findByLicenseNumber(request.licenseNumber());
+        if (existingByLicense.isPresent()) {
+            return existingByLicense.get();
+        }
+        var existingByEmail = driverRepository.findByEmail(request.email());
+        if (existingByEmail.isPresent()) {
+            return existingByEmail.get();
+        }
+
         Driver driver = new Driver();
         driver.setName(request.name());
         driver.setEmail(request.email());
         driver.setPhone(request.phone());
         driver.setLicenseNumber(request.licenseNumber());
         driver.setStatus(DriverStatus.AVAILABLE);
-        Driver saved = driverRepository.save(driver);
-        evictAvailableDrivers();
-        return saved;
+        try {
+            Driver saved = driverRepository.save(driver);
+            evictAvailableDrivers();
+            return saved;
+        } catch (DataIntegrityViolationException ex) {
+            Optional<Driver> existing = driverRepository.findByLicenseNumber(request.licenseNumber());
+            if (existing.isEmpty()) {
+                existing = driverRepository.findByEmail(request.email());
+            }
+            return existing.orElseThrow(() -> new ResponseStatusException(HttpStatus.CONFLICT, "Driver already exists", ex));
+        }
     }
 
     public Driver get(Long id) {
@@ -98,4 +116,3 @@ public class DriverService {
         redisTemplate.delete(AVAILABLE_CACHE_KEY);
     }
 }
-

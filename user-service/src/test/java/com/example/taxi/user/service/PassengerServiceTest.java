@@ -27,6 +27,7 @@ class PassengerServiceTest {
 
     @Test
     void createMapsRequestToEntity() {
+        when(passengerRepository.findByEmail("alex@example.com")).thenReturn(Optional.empty());
         when(passengerRepository.save(any(Passenger.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
         Passenger created = passengerService.create(new PassengerCreateRequest(

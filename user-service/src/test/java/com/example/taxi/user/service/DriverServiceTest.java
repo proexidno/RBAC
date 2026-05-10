@@ -42,6 +42,8 @@ class DriverServiceTest {
 
     @Test
     void createSetsAvailableStatusAndEvictsCache() {
+        when(driverRepository.findByLicenseNumber("A123BC")).thenReturn(Optional.empty());
+        when(driverRepository.findByEmail("ivan@example.com")).thenReturn(Optional.empty());
         when(driverRepository.save(any(Driver.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
         Driver driver = driverService.create(new DriverCreateRequest(
