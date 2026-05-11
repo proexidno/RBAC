@@ -1,0 +1,656 @@
+openapi: 3.0.3
+info:
+  title: Taxi Platform API
+  version: 1.0.0
+  description: |
+    Unified OpenAPI documentation for the Taxi Platform microservices:
+    - User Service: Manages passengers, drivers, authentication, and driver availability.
+    - Notification Service: Handles async notification tasks via RabbitMQ.
+    - Trip Service: Orchestrates trip creation, status updates, pricing, and statistics.
+  contact:
+    name: proexidno
+    email: aboba@example.com
+
+servers:
+  - url: http://user-service:8081
+    description: User Service
+  - url: http://trip-service:8082
+    description: Trip Service
+  - url: http://notification-service:8083
+    description: Notification Service
+
+security:
+  - BearerAuth: []
+
+paths:
+  /auth/token:
+    post:
+      tags:
+        - User Service - Auth
+      summary: Generate JWT token
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AuthRequest'
+      responses:
+        '200':
+          description: JWT token generated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+        '400':
+          description: Invalid request payload
+
+  /passengers:
+    post:
+      tags:
+        - User Service - Passengers
+      summary: Register a new passenger
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PassengerCreateRequest'
+      responses:
+        '200':
+          description: Passenger created or existing passenger returned
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Passenger'
+        '400':
+          description: Invalid request payload
+
+  /passengers/{id}:
+    get:
+      tags:
+        - User Service - Passengers
+      summary: Get passenger by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: Passenger found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Passenger'
+        '404':
+          description: Passenger not found
+
+  /drivers:
+    post:
+      tags:
+        - User Service - Drivers
+      summary: Register a new driver
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DriverCreateRequest'
+      responses:
+        '200':
+          description: Driver created or existing driver returned
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Driver'
+        '400':
+          description: Invalid request payload
+
+  /drivers/{id}:
+    get:
+      tags:
+        - User Service - Drivers
+      summary: Get driver by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: Driver found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Driver'
+        '404':
+          description: Driver not found
+
+  /drivers/available:
+    get:
+      tags:
+        - User Service - Drivers
+      summary: List available drivers
+      responses:
+        '200':
+          description: List of available drivers
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Driver'
+
+  /drivers/reserve:
+    post:
+      tags:
+        - User Service - Drivers
+      summary: Reserve an available driver
+      responses:
+        '200':
+          description: Driver successfully reserved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Driver'
+        '409':
+          description: No available drivers
+
+  /drivers/{id}/status:
+    patch:
+      tags:
+        - User Service - Drivers
+      summary: Update driver status
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DriverStatusRequest'
+      responses:
+        '200':
+          description: Driver status updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Driver'
+        '400':
+          description: Invalid request payload
+        '404':
+          description: Driver not found
+
+  /notifications:
+    post:
+      tags:
+        - Notification Service
+      summary: Create a notification task
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/NotificationCreateRequest'
+      responses:
+        '201':
+          description: Notification task created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotificationTask'
+        '400':
+          description: Invalid request payload
+    get:
+      tags:
+        - Notification Service
+      summary: Get notifications by trip ID
+      parameters:
+        - name: trip_id
+          in: query
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: List of notification tasks for the trip
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/NotificationTask'
+
+  /trips:
+    post:
+      tags:
+        - Trip Service
+      summary: Create a new trip
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TripCreateRequest'
+      responses:
+        '201':
+          description: Trip created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Trip'
+        '400':
+          description: Invalid request payload
+    get:
+      tags:
+        - Trip Service
+      summary: Get trips by passenger ID
+      parameters:
+        - name: passenger_id
+          in: query
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: List of trips for the passenger
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Trip'
+
+  /trips/{id}:
+    get:
+      tags:
+        - Trip Service
+      summary: Get trip by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: Trip found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Trip'
+        '404':
+          description: Trip not found
+
+  /trips/{id}/status:
+    patch:
+      tags:
+        - Trip Service
+      summary: Update trip status
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TripStatusRequest'
+      responses:
+        '200':
+          description: Trip status updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Trip'
+        '400':
+          description: Invalid request payload
+        '404':
+          description: Trip not found
+
+  /trips/{id}/rating:
+    post:
+      tags:
+        - Trip Service
+      summary: Rate a completed trip
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RatingRequest'
+      responses:
+        '200':
+          description: Trip rated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Trip'
+        '400':
+          description: Invalid request payload
+        '404':
+          description: Trip not found
+        '409':
+          description: Only completed trips can be rated
+
+  /trips/statistics/daily:
+    get:
+      tags:
+        - Trip Service
+      summary: Get daily trip statistics
+      parameters:
+        - name: date
+          in: query
+          required: true
+          schema:
+            type: string
+            format: date
+      responses:
+        '200':
+          description: Daily statistics retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DailyStatsResponse'
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    # Auth
+    AuthRequest:
+      type: object
+      required:
+        - subject
+        - role
+      properties:
+        subject:
+          type: string
+          minLength: 1
+        role:
+          type: string
+          minLength: 1
+
+    AuthResponse:
+      type: object
+      properties:
+        token:
+          type: string
+
+    # Passengers
+    PassengerCreateRequest:
+      type: object
+      required:
+        - name
+        - email
+        - phone
+      properties:
+        name:
+          type: string
+          minLength: 1
+        email:
+          type: string
+          format: email
+        phone:
+          type: string
+          minLength: 1
+
+    Passenger:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        name:
+          type: string
+        email:
+          type: string
+        phone:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+
+    # Drivers
+    DriverCreateRequest:
+      type: object
+      required:
+        - name
+        - email
+        - phone
+        - licenseNumber
+      properties:
+        name:
+          type: string
+          minLength: 1
+        email:
+          type: string
+          format: email
+        phone:
+          type: string
+          minLength: 1
+        licenseNumber:
+          type: string
+          minLength: 1
+
+    DriverStatusRequest:
+      type: object
+      required:
+        - status
+      properties:
+        status:
+          $ref: '#/components/schemas/DriverStatus'
+
+    DriverStatus:
+      type: string
+      enum:
+        - AVAILABLE
+        - BUSY
+        - OFFLINE
+
+    Driver:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        name:
+          type: string
+        email:
+          type: string
+        phone:
+          type: string
+        licenseNumber:
+          type: string
+        status:
+          $ref: '#/components/schemas/DriverStatus'
+        createdAt:
+          type: string
+          format: date-time
+
+    # Notifications
+    NotificationCreateRequest:
+      type: object
+      required:
+        - tripId
+        - recipientType
+        - recipientId
+        - message
+      properties:
+        tripId:
+          type: integer
+          format: int64
+        recipientType:
+          $ref: '#/components/schemas/RecipientType'
+        recipientId:
+          type: integer
+          format: int64
+        message:
+          type: string
+          minLength: 1
+
+    RecipientType:
+      type: string
+      enum:
+        - PASSENGER
+        - DRIVER
+
+    NotificationStatus:
+      type: string
+      enum:
+        - PENDING
+        - PROCESSING
+        - SENT
+        - FAILED
+
+    NotificationTask:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        tripId:
+          type: integer
+          format: int64
+        recipientType:
+          $ref: '#/components/schemas/RecipientType'
+        recipientId:
+          type: integer
+          format: int64
+        message:
+          type: string
+        status:
+          $ref: '#/components/schemas/NotificationStatus'
+        attempts:
+          type: integer
+        errorMessage:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+        processedAt:
+          type: string
+          format: date-time
+
+    # Trips
+    TripCreateRequest:
+      type: object
+      required:
+        - passengerId
+        - origin
+        - destination
+        - distanceKm
+      properties:
+        passengerId:
+          type: integer
+          format: int64
+        origin:
+          type: string
+          minLength: 1
+        destination:
+          type: string
+          minLength: 1
+        distanceKm:
+          type: number
+          exclusiveMinimum: true
+
+    TripStatusRequest:
+      type: object
+      required:
+        - status
+      properties:
+        status:
+          $ref: '#/components/schemas/TripStatus'
+
+    TripStatus:
+      type: string
+      enum:
+        - ASSIGNED
+        - ACCEPTED
+        - STARTED
+        - COMPLETED
+        - CANCELLED
+
+    RatingRequest:
+      type: object
+      required:
+        - rating
+      properties:
+        rating:
+          type: integer
+          minimum: 1
+          maximum: 5
+
+    DailyStatsResponse:
+      type: object
+      properties:
+        date:
+          type: string
+          format: date
+        tripsCount:
+          type: integer
+          format: int64
+        averagePrice:
+          type: number
+          format: double
+
+    Trip:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        passengerId:
+          type: integer
+          format: int64
+        driverId:
+          type: integer
+          format: int64
+        status:
+          $ref: '#/components/schemas/TripStatus'
+        origin:
+          type: string
+        destination:
+          type: string
+        distanceKm:
+          type: number
+        price:
+          type: number
+        rating:
+          type: integer
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
